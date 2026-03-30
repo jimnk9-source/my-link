@@ -25,8 +25,8 @@ graph TD
     %% 방문자 흐름
     subgraph "방문자 (Visitor) Flow"
         H[방문자 고유 URL 접속<br/>mydomain.com/abc] --> I{유효한 주소인가?}
-        I -- "No" --> J[(404) 에러 안내 화면]
-        J --> K(나만의 마이링크 만들기<br/>CTA 버튼 클릭)
+        I -- "No" --> J["(404) 에러 안내 화면"]
+        J --> K("나만의 마이링크 만들기<br/>CTA 버튼 클릭")
         K --> C
         
         I -- "Yes" --> L((퍼블릭 뷰어 렌더링))
