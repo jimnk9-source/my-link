@@ -24,6 +24,20 @@ export function LinkList({ initialLinks }: LinkListProps) {
 
   return (
     <>
+      {/* ── 링크 추가 버튼 ── */}
+      <Button
+        id="add-link-btn"
+        onClick={() => setDialogOpen(true)}
+        className="w-full h-12 font-semibold tracking-wide border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] mb-6"
+        style={{
+          background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+          boxShadow: "0 4px 24px rgba(124,58,237,0.35)",
+        }}
+      >
+        <span className="mr-2 text-base">+</span>
+        새 링크 추가
+      </Button>
+
       {/* ── 링크 목록 ── */}
       <section className="w-full flex flex-col gap-3">
         {activeLinks.length === 0 && (
@@ -105,20 +119,6 @@ export function LinkList({ initialLinks }: LinkListProps) {
           );
         })}
       </section>
-
-      {/* ── 링크 추가 버튼 ── */}
-      <Button
-        id="add-link-btn"
-        onClick={() => setDialogOpen(true)}
-        className="w-full h-12 font-semibold tracking-wide border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]"
-        style={{
-          background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-          boxShadow: "0 4px 24px rgba(124,58,237,0.35)",
-        }}
-      >
-        <span className="mr-2 text-base">+</span>
-        새 링크 추가
-      </Button>
 
       {/* ── 추가 다이얼로그 ── */}
       <AddLinkDialog

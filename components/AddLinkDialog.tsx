@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +15,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LinkType } from "@/data/links";
 
+// Zod 스키마 정의
+const linkSchema = z.object({
+  title: z
+    .string()
+    .min(1, "링크 제목을 입력해주세요.")
+    .max(50, "제목은 최대 50자까지 입력 가능합니다."),
+  url: z
+    .string()
+    .min(1, "URL을 입력해주세요.")
+    .refine((val) => val.startsWith("http://") || val.startsWith("https://"), {
+      message: "http 나 https로 시작하는 올바른 url을 추가하세요",
+    })
+    .refine(
+      (val) => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "URL 형식이 올바르지 않습니다." }
+    ),
+});
+
+type LinkFormValues = z.infer<typeof linkSchema>;
+
 interface AddLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,41 +53,30 @@ export function AddLinkDialog({
   onOpenChange,
   onAdd,
 }: AddLinkDialogProps) {
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
-  const [errors, setErrors] = useState<{ title?: string; url?: string }>({});
+  // react-hook-form 설정
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<LinkFormValues>({
+    resolver: zodResolver(linkSchema),
+    defaultValues: {
+      title: "",
+      url: "",
+    },
+    mode: "onChange", // 실시간 검증
+  });
 
-  const validate = () => {
-    const newErrors: { title?: string; url?: string } = {};
-    if (!title.trim()) {
-      newErrors.title = "링크 제목을 입력해주세요.";
-    }
-    if (!url.trim()) {
-      newErrors.url = "URL을 입력해주세요.";
-    } else {
-      try {
-        const parsed = new URL(
-          url.startsWith("http") ? url : `https://${url}`
-        );
-        if (!parsed.hostname) throw new Error();
-      } catch {
-        newErrors.url = "올바른 URL 형식을 입력해주세요. (예: https://example.com)";
-      }
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const urlValue = watch("url");
 
-  const handleSubmit = () => {
-    if (!validate()) return;
-
-    const normalizedUrl = url.startsWith("http") ? url : `https://${url}`;
-
+  const onSubmit = (data: LinkFormValues) => {
     const newLink: LinkType = {
       id: `link-${Date.now()}`,
-      title: title.trim(),
-      url: normalizedUrl,
-      isActive: true,
+      title: data.title.trim(),
+      url: data.url.trim(),
+      isActive: true, // 기본값 활성화
       order: Date.now(),
     };
 
@@ -67,9 +85,7 @@ export function AddLinkDialog({
   };
 
   const handleReset = () => {
-    setTitle("");
-    setUrl("");
-    setErrors({});
+    reset();
     onOpenChange(false);
   };
 
@@ -110,7 +126,7 @@ export function AddLinkDialog({
             </p>
           </DialogHeader>
 
-          <div className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
             {/* 제목 필드 */}
             <div className="flex flex-col gap-2">
               <Label
@@ -122,21 +138,22 @@ export function AddLinkDialog({
               <Input
                 id="link-title"
                 placeholder="예: 내 인스타그램"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  if (errors.title) setErrors((p) => ({ ...p, title: undefined }));
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-violet-500/60 h-11"
+                {...register("title")}
+                className={`border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 h-11 transition-all ${
+                  errors.title 
+                    ? "focus-visible:ring-rose-500/60 ring-1 ring-rose-500/20" 
+                    : "focus-visible:ring-violet-500/60"
+                }`}
                 style={{
                   background: "rgba(255,255,255,0.06)",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
+                  boxShadow: errors.title 
+                    ? "inset 0 0 0 1px rgba(244,63,94,0.3)" 
+                    : "inset 0 0 0 1px rgba(255,255,255,0.08)",
                 }}
               />
               {errors.title && (
-                <p className="text-xs text-rose-400/80 flex items-center gap-1">
-                  <span>⚠</span> {errors.title}
+                <p className="text-xs text-rose-400/80 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                  <span>⚠</span> {errors.title.message}
                 </p>
               )}
             </div>
@@ -152,29 +169,30 @@ export function AddLinkDialog({
               <Input
                 id="link-url"
                 placeholder="예: https://instagram.com/username"
-                value={url}
-                onChange={(e) => {
-                  setUrl(e.target.value);
-                  if (errors.url) setErrors((p) => ({ ...p, url: undefined }));
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 focus-visible:ring-violet-500/60 h-11 font-mono text-sm"
+                {...register("url")}
+                className={`border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 h-11 font-mono text-sm transition-all ${
+                  errors.url 
+                    ? "focus-visible:ring-rose-500/60 ring-1 ring-rose-500/20" 
+                    : "focus-visible:ring-violet-500/60"
+                }`}
                 style={{
                   background: "rgba(255,255,255,0.06)",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
+                  boxShadow: errors.url 
+                    ? "inset 0 0 0 1px rgba(244,63,94,0.3)" 
+                    : "inset 0 0 0 1px rgba(255,255,255,0.08)",
                 }}
               />
               {errors.url && (
-                <p className="text-xs text-rose-400/80 flex items-center gap-1">
-                  <span>⚠</span> {errors.url}
+                <p className="text-xs text-rose-400/80 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                  <span>⚠</span> {errors.url.message}
                 </p>
               )}
             </div>
 
             {/* URL 미리보기 */}
-            {url && !errors.url && (
+            {urlValue && !errors.url && (
               <div
-                className="flex items-center gap-3 rounded-xl p-3"
+                className="flex items-center gap-3 rounded-xl p-3 animate-in zoom-in-95 duration-200"
                 style={{
                   background: "rgba(124,58,237,0.08)",
                   boxShadow: "inset 0 0 0 1px rgba(124,58,237,0.2)",
@@ -182,9 +200,9 @@ export function AddLinkDialog({
               >
                 {(() => {
                   try {
-                    const normalized = url.startsWith("http")
-                      ? url
-                      : `https://${url}`;
+                    const normalized = urlValue.startsWith("http")
+                      ? urlValue
+                      : `https://${urlValue}`;
                     const hostname = new URL(normalized).hostname;
                     return (
                       <>
@@ -195,7 +213,7 @@ export function AddLinkDialog({
                           height={20}
                           className="rounded"
                         />
-                        <span className="text-xs text-white/50 font-mono">
+                        <span className="text-xs text-white/50 font-mono truncate">
                           {hostname}
                         </span>
                       </>
@@ -206,27 +224,28 @@ export function AddLinkDialog({
                 })()}
               </div>
             )}
-          </div>
 
-          <DialogFooter className="mt-6 flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={handleReset}
-              className="flex-1 text-white/50 hover:text-white/80 hover:bg-white/5 border-0 h-11"
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              className="flex-1 font-semibold h-11 border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
-              style={{
-                background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-                boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
-              }}
-            >
-              추가하기
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="mt-1 flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleReset}
+                className="flex-1 text-white/50 hover:text-white/80 hover:bg-white/5 border-0 h-11"
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 font-semibold h-11 border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+                  boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
+                }}
+              >
+                추가하기
+              </Button>
+            </DialogFooter>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
