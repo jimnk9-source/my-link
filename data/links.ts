@@ -11,7 +11,7 @@ export const dummyLinks: LinkType[] = [
   {
     id: "link-1",
     title: "Instagram",
-    url: "https://instagram.com/your_username",
+    url: "https://instagram.com/jminkuu",
     icon: "instagram",
     isActive: true,
     order: 1,
@@ -19,7 +19,7 @@ export const dummyLinks: LinkType[] = [
   {
     id: "link-2",
     title: "YouTube",
-    url: "https://youtube.com/@your_channel",
+    url: "https://youtube.com/@trallarrero",
     icon: "youtube",
     isActive: true,
     order: 2,
