@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { collection, onSnapshot, query, orderBy, setDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { LinkType } from "@/data/links";
 import { AddLinkDialog } from "@/components/AddLinkDialog";
@@ -14,12 +16,28 @@ export function LinkList({ initialLinks }: LinkListProps) {
   const [links, setLinks] = useState<LinkType[]>(initialLinks);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Firestore에서 실시간으로 링크 로드
+  useEffect(() => {
+    const q = query(collection(db, "users", "anonymous", "links"), orderBy("order"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedLinks: LinkType[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedLinks.push(docSnap.data() as LinkType);
+      });
+      setLinks(fetchedLinks);
+    });
+    return () => unsubscribe();
+  }, []);
+
+
   const activeLinks = links
     .filter((link) => link.isActive)
     .sort((a, b) => a.order - b.order);
 
-  const handleAddLink = (newLink: LinkType) => {
-    setLinks((prev) => [...prev, newLink]);
+  const handleAddLink = async (newLink: LinkType) => {
+    // Firestore에 새 링크 저장
+    await setDoc(doc(db, "users", "anonymous", "links", newLink.id), newLink);
+    // 로컬 상태는 onSnapshot에 의해 자동 업데이트됩니다.
   };
 
   return (

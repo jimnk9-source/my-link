@@ -1,4 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -14,6 +15,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// Firestore 인스턴스 생성
+const db = getFirestore(app);
+
 // Initialize Analytics
 let analytics: Analytics | undefined;
 if (typeof window !== "undefined") {
@@ -24,4 +28,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { app, analytics };
+export { app, analytics, db };
