@@ -3,4 +3,5 @@ export interface LinkType {
   title: string;
   url: string;
   createdAt: number;
+  updatedAt?: number;
 }

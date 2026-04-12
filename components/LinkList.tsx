@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { collection, onSnapshot, query, orderBy, setDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { LinkType } from "@/data/links";
 import { AddLinkDialog } from "@/components/AddLinkDialog";
+import { LinkItem } from "@/components/LinkItem";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 export function LinkList() {
   const [links, setLinks] = useState<LinkType[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [linkToDelete, setLinkToDelete] = useState<LinkType | null>(null);
 
   // Firestore에서 실시간으로 링크 로드 (createdAt 최신순)
   useEffect(() => {
@@ -29,8 +32,23 @@ export function LinkList() {
   }, []);
 
   const handleAddLink = async (newLink: LinkType) => {
-    // Firestore에 새 링크 저장 → onSnapshot이 자동으로 목록 갱신
     await setDoc(doc(db, "users", "anonymous", "links", newLink.id), newLink);
+  };
+
+  const handleUpdateLink = async (id: string, data: Partial<LinkType>) => {
+    await updateDoc(doc(db, "users", "anonymous", "links", id), {
+      ...data,
+      updatedAt: Date.now(),
+    });
+  };
+
+  const handleDeleteRequest = (link: LinkType) => {
+    setLinkToDelete(link);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async (id: string) => {
+    await deleteDoc(doc(db, "users", "anonymous", "links", id));
   };
 
   return (
@@ -64,71 +82,14 @@ export function LinkList() {
           </div>
         )}
 
-        {links.map((link) => {
-          const hostname = (() => {
-            try {
-              return new URL(link.url).hostname;
-            } catch {
-              return "";
-            }
-          })();
-
-          return (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block group"
-            >
-              <Card
-                className="border-0 cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_#7c3aed30]"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                }}
-              >
-                <CardContent className="flex items-center gap-4 py-4">
-                  {/* 파비콘 래퍼 */}
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(255,255,255,0.08)" }}
-                  >
-                    {hostname ? (
-                      <img
-                        src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
-                        alt={link.title}
-                        width={20}
-                        height={20}
-                        className="rounded"
-                      />
-                    ) : (
-                      <span className="text-white/40 text-xs">🔗</span>
-                    )}
-                  </div>
-
-                  {/* 링크 제목 */}
-                  <span className="flex-1 font-medium text-white/90 text-sm tracking-wide">
-                    {link.title}
-                  </span>
-
-                  {/* 화살표 */}
-                  <svg
-                    className="w-4 h-4 text-white/25 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all duration-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </CardContent>
-              </Card>
-            </a>
-          );
-        })}
+        {links.map((link) => (
+          <LinkItem
+            key={link.id}
+            link={link}
+            onUpdate={handleUpdateLink}
+            onDeleteRequest={handleDeleteRequest}
+          />
+        ))}
       </section>
 
       {/* ── 추가 다이얼로그 ── */}
@@ -137,6 +98,15 @@ export function LinkList() {
         onOpenChange={setDialogOpen}
         onAdd={handleAddLink}
       />
+
+      {/* ── 삭제 확인 다이얼로그 ── */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        link={linkToDelete}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   );
 }
+
