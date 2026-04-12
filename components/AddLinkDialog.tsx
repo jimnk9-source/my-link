@@ -72,12 +72,12 @@ export function AddLinkDialog({
   const urlValue = watch("url");
 
   const onSubmit = (data: LinkFormValues) => {
+    const now = Date.now();
     const newLink: LinkType = {
-      id: `link-${Date.now()}`,
+      id: `link-${now}`,
       title: data.title.trim(),
       url: data.url.trim(),
-      isActive: true, // 기본값 활성화
-      order: Date.now(),
+      createdAt: now,
     };
 
     onAdd(newLink);

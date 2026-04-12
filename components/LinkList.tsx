@@ -8,17 +8,16 @@ import { Button } from "@/components/ui/button";
 import { LinkType } from "@/data/links";
 import { AddLinkDialog } from "@/components/AddLinkDialog";
 
-interface LinkListProps {
-  initialLinks: LinkType[];
-}
-
-export function LinkList({ initialLinks }: LinkListProps) {
-  const [links, setLinks] = useState<LinkType[]>(initialLinks);
+export function LinkList() {
+  const [links, setLinks] = useState<LinkType[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Firestore에서 실시간으로 링크 로드
+  // Firestore에서 실시간으로 링크 로드 (createdAt 최신순)
   useEffect(() => {
-    const q = query(collection(db, "users", "anonymous", "links"), orderBy("order"));
+    const q = query(
+      collection(db, "users", "anonymous", "links"),
+      orderBy("createdAt", "desc")
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedLinks: LinkType[] = [];
       snapshot.forEach((docSnap) => {
@@ -29,15 +28,9 @@ export function LinkList({ initialLinks }: LinkListProps) {
     return () => unsubscribe();
   }, []);
 
-
-  const activeLinks = links
-    .filter((link) => link.isActive)
-    .sort((a, b) => a.order - b.order);
-
   const handleAddLink = async (newLink: LinkType) => {
-    // Firestore에 새 링크 저장
+    // Firestore에 새 링크 저장 → onSnapshot이 자동으로 목록 갱신
     await setDoc(doc(db, "users", "anonymous", "links", newLink.id), newLink);
-    // 로컬 상태는 onSnapshot에 의해 자동 업데이트됩니다.
   };
 
   return (
@@ -58,7 +51,7 @@ export function LinkList({ initialLinks }: LinkListProps) {
 
       {/* ── 링크 목록 ── */}
       <section className="w-full flex flex-col gap-3">
-        {activeLinks.length === 0 && (
+        {links.length === 0 && (
           <div
             className="w-full rounded-2xl flex flex-col items-center justify-center py-10 gap-2"
             style={{
@@ -71,7 +64,7 @@ export function LinkList({ initialLinks }: LinkListProps) {
           </div>
         )}
 
-        {activeLinks.map((link) => {
+        {links.map((link) => {
           const hostname = (() => {
             try {
               return new URL(link.url).hostname;

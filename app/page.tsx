@@ -1,4 +1,3 @@
-import { dummyLinks } from "@/data/links";
 import { LinkList } from "@/components/LinkList";
 
 /* ─────────────────────────────────────────────
@@ -74,7 +73,7 @@ export default function Page() {
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
           {/* ── 링크 목록 + 추가 버튼 (클라이언트 컴포넌트) ── */}
-          <LinkList initialLinks={dummyLinks} />
+          <LinkList />
 
           {/* ── 브랜딩 푸터 ── */}
           <footer className="mt-4 flex flex-col items-center gap-1">
