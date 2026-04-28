@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   collection,
-  onSnapshot,
+  getDocs,
   query,
   orderBy,
   setDoc,
@@ -17,6 +18,7 @@ import { LinkType } from "@/data/links";
 import { AddLinkDialog } from "@/components/AddLinkDialog";
 import { LinkItem } from "@/components/LinkItem";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { toast } from "sonner";
 
 interface LinkListProps {
   /** 현재 로그인된 사용자의 uid */
@@ -24,36 +26,71 @@ interface LinkListProps {
 }
 
 export function LinkList({ uid }: LinkListProps) {
-  const [links, setLinks] = useState<LinkType[]>([]);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [linkToDelete, setLinkToDelete] = useState<LinkType | null>(null);
 
-  // Firestore에서 실시간으로 링크 로드 (createdAt 최신순)
-  useEffect(() => {
-    const q = query(
-      collection(db, "users", uid, "links"),
-      orderBy("createdAt", "desc")
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+  // 1. 링크 목록 조회 (useQuery) - 실시간 리스너 제거
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["links", uid],
+    queryFn: async () => {
+      const q = query(
+        collection(db, "users", uid, "links"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
       const fetchedLinks: LinkType[] = [];
       snapshot.forEach((docSnap) => {
         fetchedLinks.push(docSnap.data() as LinkType);
       });
-      setLinks(fetchedLinks);
-    });
-    return () => unsubscribe();
-  }, [uid]);
+      return fetchedLinks;
+    },
+    enabled: !!uid,
+  });
+
+  // 2. 링크 추가 (useMutation)
+  const addMutation = useMutation({
+    mutationFn: async (newLink: LinkType) => {
+      await setDoc(doc(db, "users", uid, "links", newLink.id), newLink);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", uid] });
+      toast.success("새 링크가 추가되었습니다.");
+    },
+  });
+
+  // 3. 링크 업데이트 (useMutation)
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<LinkType> }) => {
+      await updateDoc(doc(db, "users", uid, "links", id), {
+        ...data,
+        updatedAt: Date.now(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", uid] });
+      toast.success("링크가 수정되었습니다.");
+    },
+  });
+
+  // 4. 링크 삭제 (useMutation)
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await deleteDoc(doc(db, "users", uid, "links", id));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", uid] });
+      toast.success("링크가 삭제되었습니다.");
+    },
+  });
 
   const handleAddLink = async (newLink: LinkType) => {
-    await setDoc(doc(db, "users", uid, "links", newLink.id), newLink);
+    await addMutation.mutateAsync(newLink);
   };
 
   const handleUpdateLink = async (id: string, data: Partial<LinkType>) => {
-    await updateDoc(doc(db, "users", uid, "links", id), {
-      ...data,
-      updatedAt: Date.now(),
-    });
+    await updateMutation.mutateAsync({ id, data });
   };
 
   const handleDeleteRequest = (link: LinkType) => {
@@ -62,8 +99,17 @@ export function LinkList({ uid }: LinkListProps) {
   };
 
   const handleDeleteConfirm = async (id: string) => {
-    await deleteDoc(doc(db, "users", uid, "links", id));
+    await deleteMutation.mutateAsync(id);
+    setDeleteDialogOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex justify-center py-20">
+        <div className="w-8 h-8 rounded-full border-4 border-accent border-t-violet-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/hooks/useAuth"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const robotoSlabHeading = Roboto_Slab({subsets:['latin'],variable:'--font-heading'});
 
@@ -28,10 +29,12 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-            <Toaster position="top-center" />
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <Toaster position="top-center" />
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
