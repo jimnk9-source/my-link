@@ -137,15 +137,6 @@ function MyPage({
     }
 
     try {
-      if (editingField === "displayName") {
-        // User name 중복 체크 및 유효성 검사
-        if (trimmedValue.length < 3) throw new Error("User name은 3글자 이상이어야 합니다.");
-        if (!/^[a-z0-9_]+$/.test(trimmedValue)) throw new Error("영문 소문자, 숫자, 언더바만 가능합니다.");
-        
-        const isUnique = await checkUnique(trimmedValue, profile.uid);
-        if (!isUnique) throw new Error("이미 사용 중인 User name입니다.");
-      }
-
       if (editingField === "username" && trimmedValue.length < 2) {
         throw new Error("이름은 2글자 이상이어야 합니다.");
       }
@@ -208,28 +199,10 @@ function MyPage({
               </h1>
             )}
 
-            {/* 디스플레이 네임 편집 */}
-            {editingField === "displayName" ? (
-              <div className="flex items-center text-sm font-mono font-semibold text-muted-foreground">
-                <span>@</span>
-                <Input
-                  ref={inputRef}
-                  autoFocus
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value.toLowerCase())}
-                  onBlur={handleSave}
-                  onKeyDown={handleKeyDown}
-                  className="h-auto py-0.5 px-1 bg-transparent border-b border-violet-500 rounded-none focus-visible:ring-0 w-32"
-                />
-              </div>
-            ) : (
-              <p 
-                className="text-sm text-muted-foreground font-mono font-semibold tracking-tight cursor-pointer hover:text-violet-500 transition-colors"
-                onClick={() => startEditing("displayName", profile.displayName)}
-              >
-                @{profile.displayName}
-              </p>
-            )}
+            {/* 디스플레이 네임 (수정 불가) */}
+            <p className="text-sm text-muted-foreground font-mono font-semibold tracking-tight opacity-70">
+              @{profile.displayName}
+            </p>
 
             {/* 소개글 편집 */}
             {editingField === "bio" ? (

@@ -56,18 +56,6 @@ export function useProfile(uid: string | undefined) {
       const currentProfile = profileQuery.data;
 
       await runTransaction(db, async (transaction) => {
-        if (data.displayName && data.displayName !== currentProfile.displayName) {
-          const newNameRef = getDisplayNameRef(data.displayName);
-          const newNameSnap = await transaction.get(newNameRef);
-          
-          if (newNameSnap.exists() && newNameSnap.data().uid !== uid) {
-            throw new Error("이미 사용 중인 User name입니다.");
-          }
-
-          transaction.delete(getDisplayNameRef(currentProfile.displayName));
-          transaction.set(newNameRef, { uid });
-        }
-
         const profileRef = getProfileRef(uid);
         transaction.set(profileRef, {
           ...currentProfile,
