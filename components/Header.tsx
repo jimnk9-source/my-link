@@ -14,14 +14,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import Link from "next/link";
+import { useProfile } from "@/hooks/useProfile";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
   const { setTheme, resolvedTheme } = useTheme();
   const [copied, setCopied] = useState(false);
+  const router = useRouter();
 
-  const slug = user?.email ? user.email.split("@")[0] : null;
-  const initial = user?.displayName?.charAt(0)?.toUpperCase() ?? user?.email?.charAt(0)?.toUpperCase() ?? "?";
+  // 실제 프로필 정보를 가져와서 정확한 slug(displayName)를 확인
+  const { profile } = useProfile(user?.uid);
+  const slug = profile?.displayName ?? (user?.email ? user.email.split("@")[0] : null);
+  const initial = profile?.username?.charAt(0)?.toUpperCase() ?? user?.displayName?.charAt(0)?.toUpperCase() ?? user?.email?.charAt(0)?.toUpperCase() ?? "?";
 
   const handleCopyLink = async () => {
     if (!slug) return;
@@ -52,15 +58,31 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 h-14 bg-background/80 backdrop-blur-xl border-b border-border/40 transition-colors duration-500">
-      <span className="text-base font-bold tracking-tight select-none bg-gradient-to-r from-violet-500 to-blue-500 bg-clip-text text-transparent">
-        MyLink
-      </span>
+      <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
+        <span className="text-xl group-hover:rotate-12 transition-transform">🔗</span>
+        <span className="text-base font-bold tracking-tight select-none bg-gradient-to-r from-violet-500 to-blue-500 bg-clip-text text-transparent">
+          MyLink
+        </span>
+      </Link>
 
       <div className="flex items-center gap-3">
         {loading ? (
           <div className="w-5 h-5 rounded-full border-2 border-border border-t-violet-400 animate-spin" />
         ) : user ? (
-          <DropdownMenu>
+          <>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2 h-9 px-4 text-xs font-black rounded-full border border-violet-500/20 bg-violet-500/5 text-violet-600 hover:bg-violet-500/10 active:scale-95 transition-all"
+            >
+              <Link href={`/${slug}`}>
+                <span className="text-base">🔗</span>
+                내 페이지
+              </Link>
+            </Button>
+
+            <DropdownMenu>
             <DropdownMenuTrigger
               className="flex items-center gap-2 rounded-full px-1 py-1 pr-3 transition-all duration-300 hover:bg-violet-500/5 active:scale-95 focus:outline-none cursor-pointer text-foreground group border border-transparent hover:border-violet-500/20"
             >
@@ -108,12 +130,24 @@ export function Header() {
                 <p className="px-3 py-2 text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">바로가기</p>
                 
                 <DropdownMenuItem
+                  asChild
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-foreground/80 focus:bg-violet-600 focus:text-white cursor-pointer transition-all active:scale-[0.98] group/item"
-                  onPointerDown={handleOpenPage}
                 >
-                  <span className="text-lg group-focus:scale-110 transition-transform">🔗</span>
-                  <span>내 페이지 보기</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground/40 group-focus:text-white/60 font-mono">@{slug}</span>
+                  <Link href={`/${slug}`} className="flex w-full items-center gap-3">
+                    <span className="text-lg group-focus:scale-110 transition-transform">🔗</span>
+                    <span>내 페이지 보기</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground/40 group-focus:text-white/60 font-mono">@{slug}</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  asChild
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-foreground/80 focus:bg-violet-600 focus:text-white cursor-pointer transition-all active:scale-[0.98] group/item"
+                >
+                  <Link href="/" className="flex w-full items-center gap-3">
+                    <span className="text-lg group-focus:scale-110 transition-transform">⚙️</span>
+                    <span>링크 관리</span>
+                  </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -152,7 +186,8 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
+        </>
+      ) : (
           <Button
             size="sm"
             onClick={signInWithGoogle}
