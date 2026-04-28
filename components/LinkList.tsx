@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  setDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { LinkType } from "@/data/links";
@@ -9,7 +18,12 @@ import { AddLinkDialog } from "@/components/AddLinkDialog";
 import { LinkItem } from "@/components/LinkItem";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
-export function LinkList() {
+interface LinkListProps {
+  /** 현재 로그인된 사용자의 uid */
+  uid: string;
+}
+
+export function LinkList({ uid }: LinkListProps) {
   const [links, setLinks] = useState<LinkType[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -18,7 +32,7 @@ export function LinkList() {
   // Firestore에서 실시간으로 링크 로드 (createdAt 최신순)
   useEffect(() => {
     const q = query(
-      collection(db, "users", "anonymous", "links"),
+      collection(db, "users", uid, "links"),
       orderBy("createdAt", "desc")
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -29,14 +43,14 @@ export function LinkList() {
       setLinks(fetchedLinks);
     });
     return () => unsubscribe();
-  }, []);
+  }, [uid]);
 
   const handleAddLink = async (newLink: LinkType) => {
-    await setDoc(doc(db, "users", "anonymous", "links", newLink.id), newLink);
+    await setDoc(doc(db, "users", uid, "links", newLink.id), newLink);
   };
 
   const handleUpdateLink = async (id: string, data: Partial<LinkType>) => {
-    await updateDoc(doc(db, "users", "anonymous", "links", id), {
+    await updateDoc(doc(db, "users", uid, "links", id), {
       ...data,
       updatedAt: Date.now(),
     });
@@ -48,7 +62,7 @@ export function LinkList() {
   };
 
   const handleDeleteConfirm = async (id: string) => {
-    await deleteDoc(doc(db, "users", "anonymous", "links", id));
+    await deleteDoc(doc(db, "users", uid, "links", id));
   };
 
   return (
@@ -109,4 +123,3 @@ export function LinkList() {
     </>
   );
 }
-

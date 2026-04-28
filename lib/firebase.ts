@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -9,16 +10,22 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
+// Firebase 앱 초기화
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Firestore 인스턴스 생성
+// Firestore 인스턴스
 const db = getFirestore(app);
 
-// Initialize Analytics
+// Authentication 인스턴스
+const auth = getAuth(app);
+
+// Google 로그인 Provider
+const googleProvider = new GoogleAuthProvider();
+
+// Analytics (클라이언트에서만 초기화)
 let analytics: Analytics | undefined;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {
@@ -28,4 +35,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { app, analytics, db };
+export { app, analytics, db, auth, googleProvider };
