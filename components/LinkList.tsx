@@ -84,15 +84,9 @@ export function LinkList({ uid }: LinkListProps) {
       {/* ── 링크 목록 ── */}
       <section className="w-full flex flex-col gap-3">
         {links.length === 0 && (
-          <div
-            className="w-full rounded-2xl flex flex-col items-center justify-center py-10 gap-2"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
-            }}
-          >
+          <div className="w-full rounded-2xl flex flex-col items-center justify-center py-10 gap-2 bg-accent/30 border border-dashed border-border">
             <span className="text-3xl">🔗</span>
-            <p className="text-sm text-white/30">아직 등록된 링크가 없습니다.</p>
+            <p className="text-sm text-muted-foreground/60">아직 등록된 링크가 없습니다.</p>
           </div>
         )}
 

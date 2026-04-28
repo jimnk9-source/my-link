@@ -4,26 +4,38 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { LinkList } from "@/components/LinkList";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
 
 /* ─────────────────────────────────────────────
    배경 컴포넌트 (공통)
 ───────────────────────────────────────────── */
 function Background() {
+  const { resolvedTheme } = useTheme();
+  
   return (
-    <div className="fixed inset-0 -z-10 bg-[#0a0a0f]">
+    <div className="fixed inset-0 -z-10 bg-[#fefaf2] dark:bg-background transition-colors duration-500">
+      {/* 다크 모드용 그라데이션 */}
       <div
-        className="absolute inset-0 opacity-60"
+        className="absolute inset-0 opacity-60 dark:block hidden"
         style={{
           background:
             "radial-gradient(ellipse 80% 60% at 50% -10%, #7c3aed55 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, #2563eb33 0%, transparent 60%)",
         }}
       />
+      {/* 라이트 모드용 따뜻한 파스텔 그라데이션 (연노란색 무드) */}
+      <div
+        className="absolute inset-0 opacity-40 dark:hidden block"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% -10%, #fbbf2415 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, #f59e0b10 0%, transparent 60%)",
+        }}
+      />
       {/* 미세 그리드 패턴 */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.015] dark:opacity-[0.015]"
         style={{
           backgroundImage:
-            "linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)",
+            "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />
@@ -36,6 +48,7 @@ function Background() {
 ───────────────────────────────────────────── */
 function LandingScreen() {
   const { signInWithGoogle } = useAuth();
+  const { resolvedTheme } = useTheme();
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 pt-14">
@@ -43,7 +56,7 @@ function LandingScreen() {
 
         {/* 아이콘 */}
         <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-2xl"
+          className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-2xl animate-bounce-slow"
           style={{
             background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
             boxShadow: "0 0 60px #7c3aed44, 0 0 120px #2563eb22",
@@ -55,72 +68,33 @@ function LandingScreen() {
         {/* 헤드라인 */}
         <div className="flex flex-col gap-3">
           <h1
-            className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight"
+            className="text-3xl sm:text-4xl font-black tracking-tight leading-tight"
             style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #a78bfa 60%, #60a5fa 100%)",
+              background: resolvedTheme === "dark" 
+                ? "linear-gradient(135deg, #ffffff 0%, #a78bfa 60%, #60a5fa 100%)"
+                : "linear-gradient(135deg, #1e1b4b 0%, #7c3aed 60%, #2563eb 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
           >
-            나만의 링크 페이지를<br />지금 바로 만들어보세요
+            나만의 모든 링크를<br />단 하나의 페이지에
           </h1>
-          <p className="text-sm text-white/50 leading-relaxed max-w-[320px] mx-auto">
-            SNS, 블로그, 포트폴리오 등 모든 링크를 하나의 페이지에서 관리하고 공유하세요.
-            로그인 후 즉시 사용할 수 있습니다.
+          <p className="text-sm sm:text-base text-muted-foreground font-medium max-w-[320px] mx-auto">
+            SNS, 블로그, 쇼핑몰 등 흩어져 있는 내 링크를<br />가장 세련된 방식으로 공유하세요.
           </p>
         </div>
 
-        {/* 기능 소개 카드 */}
-        <div className="w-full grid grid-cols-1 gap-3">
-          {[
-            { emoji: "✏️", title: "인라인 편집", desc: "클릭 한 번으로 바로 수정, 자동 저장" },
-            { emoji: "📊", title: "클릭 통계", desc: "링크별 방문자 수를 실시간으로 확인" },
-            { emoji: "🌐", title: "파비콘 자동 표시", desc: "URL 입력만 하면 로고가 자동으로 표시" },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="flex items-center gap-4 rounded-2xl p-4 text-left"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
-              }}
-            >
-              <span
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                style={{ background: "rgba(124,58,237,0.2)" }}
-              >
-                {item.emoji}
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-white/90">{item.title}</p>
-                <p className="text-xs text-white/40 mt-0.5">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Google 로그인 CTA */}
+        {/* 시작하기 버튼 */}
         <Button
-          id="landing-google-signin-btn"
           onClick={signInWithGoogle}
-          className="w-full h-13 flex items-center justify-center gap-3 font-semibold text-base rounded-2xl border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.99]"
+          size="lg"
+          className="h-14 px-10 text-base font-bold rounded-2xl border-0 transition-all duration-300 hover:scale-[1.05] active:scale-95 shadow-xl shadow-violet-500/25 text-white"
           style={{
             background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-            boxShadow: "0 4px 32px rgba(124,58,237,0.45)",
           }}
         >
-          {/* Google SVG 아이콘 */}
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#ffffffcc" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#ffffffaa" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Google로 무료 시작하기
+          Google로 시작하기
         </Button>
-
-        {/* 푸터 */}
-        <p className="text-xs text-white/20">로그인 즉시 나만의 링크 페이지가 생성됩니다</p>
       </div>
     </main>
   );
@@ -129,64 +103,58 @@ function LandingScreen() {
 /* ─────────────────────────────────────────────
    로그인 후 마이페이지
 ───────────────────────────────────────────── */
-function MyPage({ uid, displayName, email }: { uid: string; displayName: string; email: string | null }) {
-  // 이름 첫 글자 (아바타용)
+function MyPage({
+  uid,
+  displayName,
+  email,
+}: {
+  uid: string;
+  displayName: string;
+  email: string | null;
+}) {
   const initial = displayName.charAt(0).toUpperCase();
-  // 이메일 @ 앞부분을 displayName 슬러그로 사용
   const slug = email ? email.split("@")[0] : null;
 
   return (
-    <main className="flex min-h-screen flex-col items-center px-4 pt-24 pb-16">
-      <div className="w-full max-w-[420px] flex flex-col items-center gap-8">
-
+    <main className="flex min-h-screen flex-col items-center px-4 pt-24 pb-12 overflow-x-hidden">
+      <div className="w-full max-w-[500px] flex flex-col gap-10">
+        
         {/* ── 프로필 섹션 ── */}
         <section className="flex flex-col items-center gap-4 text-center">
-          {/* 아바타 */}
           <div className="relative">
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white"
+              className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-xl"
               style={{
                 background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-                boxShadow: "0 0 40px #7c3aed55, 0 0 80px #2563eb22",
               }}
             >
               {initial}
             </div>
-            {/* 활성화 배지 */}
-            <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-400 rounded-full border-2 border-[#0a0a0f]" />
+            <span className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-400 rounded-full border-4 border-background" />
           </div>
 
-          {/* 이름 & displayName */}
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl font-black text-foreground tracking-tight">
               {displayName}
             </h1>
             {slug && (
-              <p className="text-sm text-white/40 font-mono tracking-wider">
+              <p className="text-sm text-muted-foreground font-mono font-semibold tracking-tight">
                 @{slug}
               </p>
             )}
           </div>
         </section>
 
-        {/* ── 구분선 ── */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        {/* ── 링크 목록 (클라이언트 컴포넌트) ── */}
         <LinkList uid={uid} />
 
-        {/* ── 브랜딩 푸터 ── */}
-        <footer className="mt-4 flex flex-col items-center gap-1">
-          <p className="text-xs text-white/20 tracking-widest uppercase">
+        <footer className="mt-10 flex flex-col items-center gap-1">
+          <p className="text-[10px] text-muted-foreground/30 font-black tracking-widest uppercase">
             Powered by
           </p>
           <span
-            className="text-sm font-bold tracking-tight"
-            style={{
-              background: "linear-gradient(90deg, #a78bfa, #60a5fa)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
+            className="text-sm font-black tracking-tight bg-gradient-to-r from-violet-500 to-blue-500 bg-clip-text text-transparent"
           >
             MyLink
           </span>
@@ -208,22 +176,19 @@ export default function Page() {
       <Header />
 
       {loading ? (
-        /* 초기 인증 확인 중 스피너 */
         <div className="flex min-h-screen items-center justify-center">
           <div
-            className="w-10 h-10 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin"
+            className="w-10 h-10 rounded-full border-4 border-accent border-t-violet-500 animate-spin"
             aria-label="로딩 중"
           />
         </div>
       ) : user ? (
-        /* 로그인 → 마이페이지 */
         <MyPage
           uid={user.uid}
           displayName={user.displayName ?? user.email ?? "사용자"}
           email={user.email}
         />
       ) : (
-        /* 미로그인 → 랜딩 화면 */
         <LandingScreen />
       )}
     </>

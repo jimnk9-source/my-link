@@ -27,7 +27,6 @@ export function AddLinkDialog({
   onOpenChange,
   onAdd,
 }: AddLinkDialogProps) {
-  // react-hook-form 설정
   const {
     register,
     handleSubmit,
@@ -40,7 +39,7 @@ export function AddLinkDialog({
       title: "",
       url: "",
     },
-    mode: "onChange", // 실시간 검증
+    mode: "onChange",
   });
 
   const urlValue = watch("url");
@@ -67,130 +66,84 @@ export function AddLinkDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleReset(); }}>
       <DialogContent
-        className="sm:max-w-[440px] border-0 p-0 overflow-hidden"
-        style={{
-          background: "rgba(15, 15, 25, 0.95)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          boxShadow:
-            "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px rgba(0,0,0,0.6), 0 0 80px rgba(124,58,237,0.15)",
-        }}
+        className="sm:max-w-[440px] border-border/40 p-0 overflow-hidden bg-background/95 backdrop-blur-3xl shadow-2xl rounded-3xl"
       >
-        {/* 상단 그라데이션 라인 */}
-        <div
-          className="h-[2px] w-full"
-          style={{
-            background:
-              "linear-gradient(90deg, #7c3aed, #2563eb, #7c3aed)",
-          }}
-        />
+        <div className="h-[2px] w-full bg-gradient-to-r from-violet-500 via-blue-500 to-violet-500" />
 
-        <div className="p-6">
-          <DialogHeader className="mb-6">
-            <DialogTitle className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              <span
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-base"
-                style={{ background: "rgba(124,58,237,0.25)" }}
-              >
+        <div className="p-7">
+          <DialogHeader className="mb-8">
+            <DialogTitle className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/20 shadow-inner">
                 🔗
               </span>
               새 링크 추가
             </DialogTitle>
-            <p className="text-xs text-white/40 mt-1">
-              제목과 URL을 입력하면 파비콘이 자동으로 표시됩니다.
+            <p className="text-sm text-muted-foreground font-medium mt-2 leading-relaxed">
+              공유하고 싶은 링크의 제목과 주소를 입력해 주세요.<br />파비콘이 자동으로 생성됩니다.
             </p>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-7">
             {/* 제목 필드 */}
-            <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="link-title"
-                className="text-xs font-medium text-white/60 uppercase tracking-wider"
-              >
+            <div className="flex flex-col gap-2.5">
+              <Label htmlFor="link-title" className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-[0.15em] ml-1">
                 링크 제목
               </Label>
               <Input
                 id="link-title"
-                placeholder="예: 내 인스타그램"
+                placeholder="어떤 링크인가요?"
                 {...register("title")}
-                className={`border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 h-11 transition-all ${
-                  errors.title 
-                    ? "focus-visible:ring-rose-500/60 ring-1 ring-rose-500/20" 
-                    : "focus-visible:ring-violet-500/60"
+                className={`h-12 bg-white dark:bg-white/5 border-border/60 text-foreground font-semibold placeholder:text-muted-foreground/25 focus-visible:ring-violet-500/30 rounded-xl transition-all shadow-sm ${
+                  errors.title ? "ring-2 ring-rose-500/20 border-rose-500/40" : "focus:border-violet-500/50"
                 }`}
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  boxShadow: errors.title 
-                    ? "inset 0 0 0 1px rgba(244,63,94,0.3)" 
-                    : "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                }}
               />
               {errors.title && (
-                <p className="text-xs text-rose-400/80 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                  <span>⚠</span> {errors.title.message}
-                </p>
+                <p className="text-xs text-rose-500 font-bold ml-1 animate-in fade-in slide-in-from-left-1">⚠ {errors.title.message}</p>
               )}
             </div>
 
             {/* URL 필드 */}
-            <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="link-url"
-                className="text-xs font-medium text-white/60 uppercase tracking-wider"
-              >
-                URL
+            <div className="flex flex-col gap-2.5">
+              <Label htmlFor="link-url" className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-[0.15em] ml-1">
+                URL 주소
               </Label>
               <Input
                 id="link-url"
-                placeholder="예: https://instagram.com/username"
+                placeholder="https://example.com"
                 {...register("url")}
-                className={`border-0 text-white/90 placeholder:text-white/25 focus-visible:ring-1 h-11 font-mono text-sm transition-all ${
-                  errors.url 
-                    ? "focus-visible:ring-rose-500/60 ring-1 ring-rose-500/20" 
-                    : "focus-visible:ring-violet-500/60"
+                className={`h-12 bg-white dark:bg-white/5 border-border/60 text-foreground font-mono text-sm placeholder:text-muted-foreground/25 focus-visible:ring-violet-500/30 rounded-xl transition-all shadow-sm ${
+                  errors.url ? "ring-2 ring-rose-500/20 border-rose-500/40" : "focus:border-violet-500/50"
                 }`}
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  boxShadow: errors.url 
-                    ? "inset 0 0 0 1px rgba(244,63,94,0.3)" 
-                    : "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                }}
               />
               {errors.url && (
-                <p className="text-xs text-rose-400/80 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                  <span>⚠</span> {errors.url.message}
-                </p>
+                <p className="text-xs text-rose-500 font-bold ml-1 animate-in fade-in slide-in-from-left-1">⚠ {errors.url.message}</p>
               )}
             </div>
 
-            {/* URL 미리보기 */}
+            {/* 미리보기 박스 */}
             {urlValue && !errors.url && (
-              <div
-                className="flex items-center gap-3 rounded-xl p-3 animate-in zoom-in-95 duration-200"
-                style={{
-                  background: "rgba(124,58,237,0.08)",
-                  boxShadow: "inset 0 0 0 1px rgba(124,58,237,0.2)",
-                }}
-              >
+              <div className="flex items-center gap-4 rounded-2xl p-4 bg-violet-500/[0.03] dark:bg-white/5 border border-violet-500/10 animate-in zoom-in-95 duration-300 shadow-sm">
                 {(() => {
                   try {
-                    const normalized = urlValue.startsWith("http")
-                      ? urlValue
-                      : `https://${urlValue}`;
+                    const normalized = urlValue.startsWith("http") ? urlValue : `https://${urlValue}`;
                     const hostname = new URL(normalized).hostname;
                     return (
                       <>
-                        <img
-                          src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
-                          alt="favicon"
-                          width={20}
-                          height={20}
-                          className="rounded"
-                        />
-                        <span className="text-xs text-white/50 font-mono truncate">
-                          {hostname}
-                        </span>
+                        <div className="w-10 h-10 bg-white dark:bg-white/10 rounded-xl flex items-center justify-center shadow-sm border border-border/50">
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=64`}
+                            alt="favicon"
+                            width={24}
+                            height={24}
+                            className="rounded-md"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="text-[10px] font-black text-violet-500/60 dark:text-violet-400/60 uppercase tracking-widest">미리보기</span>
+                          <span className="text-sm text-foreground font-mono font-bold truncate">
+                            {hostname}
+                          </span>
+                        </div>
                       </>
                     );
                   } catch {
@@ -200,22 +153,18 @@ export function AddLinkDialog({
               </div>
             )}
 
-            <DialogFooter className="mt-1 flex gap-2">
+            <DialogFooter className="mt-4 flex gap-3">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={handleReset}
-                className="flex-1 text-white/50 hover:text-white/80 hover:bg-white/5 border-0 h-11"
+                className="flex-1 h-12 text-muted-foreground font-black hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10 dark:hover:bg-white/5 rounded-xl transition-all"
               >
                 취소
               </Button>
               <Button
                 type="submit"
-                className="flex-1 font-semibold h-11 border-0 transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
-                style={{
-                  background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-                  boxShadow: "0 4px 20px rgba(124,58,237,0.4)",
-                }}
+                className="flex-1 h-12 font-black text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 shadow-xl shadow-violet-500/20 active:scale-95 rounded-xl transition-all"
               >
                 추가하기
               </Button>

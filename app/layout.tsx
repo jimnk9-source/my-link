@@ -3,6 +3,7 @@ import { Geist_Mono, Inter, Roboto_Slab } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/hooks/useAuth"
+import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils";
 
 const robotoSlabHeading = Roboto_Slab({subsets:['latin'],variable:'--font-heading'});
@@ -29,6 +30,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
+            <Toaster position="top-center" />
           </AuthProvider>
         </ThemeProvider>
       </body>
