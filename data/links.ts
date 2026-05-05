@@ -4,4 +4,5 @@ export interface LinkType {
   url: string;
   createdAt: number;
   updatedAt?: number;
+  clickCount?: number;
 }

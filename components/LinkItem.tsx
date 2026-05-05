@@ -21,9 +21,10 @@ interface LinkItemProps {
   link: LinkType;
   onUpdate: (id: string, data: Partial<LinkType>) => Promise<void>;
   onDeleteRequest: (link: LinkType) => void;
+  onClickLink?: (linkId: string) => void;
 }
 
-export function LinkItem({ link, onUpdate, onDeleteRequest }: LinkItemProps) {
+export function LinkItem({ link, onUpdate, onDeleteRequest, onClickLink }: LinkItemProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const {
@@ -128,6 +129,7 @@ export function LinkItem({ link, onUpdate, onDeleteRequest }: LinkItemProps) {
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => onClickLink?.(link.id)}
         className="block"
       >
         <Card className="border-border/50 bg-card/40 backdrop-blur-md cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:bg-card/60 hover:border-violet-500/30">
@@ -146,8 +148,15 @@ export function LinkItem({ link, onUpdate, onDeleteRequest }: LinkItemProps) {
               )}
             </div>
 
-            <span className="flex-1 font-bold text-foreground/90 text-sm tracking-tight truncate">
-              {link.title}
+            <span className="flex-1 flex items-center font-bold text-foreground/90 text-sm tracking-tight truncate">
+              <span className="truncate">{link.title}</span>
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 ml-3 font-normal shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                {link.clickCount || 0}
+              </span>
             </span>
 
             <HugeiconsIcon 

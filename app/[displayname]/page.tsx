@@ -7,7 +7,9 @@ import {
   collection, 
   getDocs, 
   query, 
-  orderBy 
+  orderBy,
+  updateDoc,
+  increment
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { notFound, useParams } from "next/navigation";
@@ -97,6 +99,18 @@ export default function PublicProfilePage() {
     enabled: !!uid,
   });
 
+  const handleLinkClick = async (linkId: string) => {
+    if (!uid) return;
+    try {
+      const linkRef = doc(db, "users", uid, "links", linkId);
+      await updateDoc(linkRef, {
+        clickCount: increment(1)
+      });
+    } catch (error) {
+      console.error("Failed to increment click count:", error);
+    }
+  };
+
   // 로딩 상태 처리
   if (uidLoading || profileLoading || linksLoading) {
     return (
@@ -167,6 +181,7 @@ export default function PublicProfilePage() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => handleLinkClick(link.id)}
                   className="group relative w-full flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/10 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white/80 dark:hover:bg-white/10 hover:shadow-xl hover:shadow-violet-500/10 active:scale-[0.98] backdrop-blur-md"
                 >
                   <div className="w-12 h-12 rounded-xl bg-accent/50 dark:bg-white/5 flex items-center justify-center shrink-0 shadow-inner group-hover:bg-violet-500/10 transition-colors">
@@ -179,7 +194,7 @@ export default function PublicProfilePage() {
                       }}
                     />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-base font-bold text-foreground truncate group-hover:text-violet-500 transition-colors">
                       {link.title}
                     </span>
