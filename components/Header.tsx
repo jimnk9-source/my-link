@@ -151,6 +151,16 @@ export function Header() {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
+                  asChild
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-foreground/80 focus:bg-violet-600 focus:text-white cursor-pointer transition-all active:scale-[0.98] group/item"
+                >
+                  <Link href="/stats" className="flex w-full items-center gap-3">
+                    <span className="text-lg group-focus:scale-110 transition-transform">📊</span>
+                    <span>통계</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
                   className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-foreground/80 focus:bg-violet-600 focus:text-white cursor-pointer transition-all active:scale-[0.98] group/item"
                   onPointerDown={handleCopyLink}
                 >
