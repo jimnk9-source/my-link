@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "MyLink - 나만의 모든 링크를 단 하나의 페이지에";
+export const alt = "MyLink - 나만의 링크 페이지, 5초 만에 만드세요";
 export const size = {
   width: 1200,
   height: 630,
@@ -15,7 +15,7 @@ export default async function Image() {
     (
       <div
         style={{
-          background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+          background: "#fefaf2",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -27,76 +27,179 @@ export default async function Image() {
           overflow: "hidden",
         }}
       >
-        {/* 배경 패턴 장식 */}
+        {/* 배경 글로우 (랜딩 페이지 디자인 계승) */}
         <div
           style={{
             position: "absolute",
-            top: -100,
-            left: -100,
-            width: 400,
-            height: 400,
-            borderRadius: "50%",
-            background: "rgba(255, 255, 255, 0.1)",
+            top: "-10%",
+            width: "80%",
+            height: "60%",
+            background: "radial-gradient(ellipse at center, rgba(124, 58, 237, 0.15) 0%, transparent 70%)",
           }}
         />
         <div
           style={{
             position: "absolute",
-            bottom: -150,
-            right: -50,
-            width: 500,
-            height: 500,
-            borderRadius: "50%",
-            background: "rgba(255, 255, 255, 0.05)",
+            bottom: "10%",
+            right: "10%",
+            width: "60%",
+            height: "50%",
+            background: "radial-gradient(ellipse at center, rgba(37, 99, 235, 0.1) 0%, transparent 70%)",
+          }}
+        />
+        
+        {/* 그리드 패턴 */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
           }}
         />
 
-        {/* 로고 아이콘 */}
+        {/* 상단 배지 스타일 */}
         <div
           style={{
-            background: "white",
-            width: 140,
-            height: 140,
-            borderRadius: 40,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            fontSize: 80,
-            boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
+            gap: 8,
+            padding: "8px 20px",
+            borderRadius: "100px",
+            border: "1px solid rgba(124, 58, 237, 0.3)",
+            background: "rgba(124, 58, 237, 0.05)",
+            color: "#7c3aed",
+            fontSize: 20,
+            fontWeight: "bold",
             marginBottom: 40,
           }}
         >
-          🔗
+          <div style={{ width: 10, height: 10, borderRadius: 5, background: "#7c3aed" }} />
+          지금 바로 무료로 시작
         </div>
 
-        {/* 텍스트 */}
+        {/* 메인 타이틀 */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            textAlign: "center",
             gap: 10,
           }}
         >
           <div
             style={{
-              fontSize: 84,
+              fontSize: 92,
               fontWeight: 900,
-              color: "white",
+              background: "linear-gradient(135deg, #1e1b4b 0%, #7c3aed 50%, #2563eb 100%)",
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: "-0.05em",
+              lineHeight: 1.1,
+              // 글씨를 더 두껍게 보이기 위한 섀도우 기법
+              textShadow: "0.5px 0 0 currentcolor, -0.5px 0 0 currentcolor, 0 0.5px 0 currentcolor, 0 -0.5px 0 currentcolor",
             }}
           >
-            MyLink
+            나만의 링크 페이지,
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+            <div
+              style={{
+                fontSize: 92,
+                fontWeight: 900,
+                color: "#7c3aed",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                textShadow: "1px 0 0 #7c3aed, -1px 0 0 #7c3aed, 0 1px 0 #7c3aed, 0 -1px 0 #7c3aed",
+              }}
+            >
+              5초
+              {/* 물결 밑줄 재현 */}
+              <svg
+                width="165"
+                height="15"
+                viewBox="0 0 100 8"
+                style={{ position: "absolute", bottom: -8, left: 0 }}
+              >
+                <path
+                  d="M0 6 Q25 2 50 5 Q75 8 100 4"
+                  stroke="#7c3aed"
+                  strokeWidth="5"
+                  fill="none"
+                  strokeLinecap="round"
+                  opacity="0.9"
+                />
+              </svg>
+            </div>
+            <div
+              style={{
+                fontSize: 92,
+                fontWeight: 900,
+                background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+                backgroundClip: "text",
+                color: "transparent",
+                letterSpacing: "-0.05em",
+                marginLeft: 15,
+                textShadow: "0.5px 0 0 currentcolor, -0.5px 0 0 currentcolor, 0 0.5px 0 currentcolor, 0 -0.5px 0 currentcolor",
+              }}
+            >
+              만에 만드세요
+            </div>
+          </div>
+        </div>
+
+        {/* 서브 설명 */}
+        <div
+          style={{
+            marginTop: 50,
+            fontSize: 32,
+            color: "#334155",
+            fontWeight: 900,
+            letterSpacing: "-0.03em",
+            textShadow: "0.3px 0 0 #334155, -0.3px 0 0 #334155",
+          }}
+        >
+          SNS, 블로그 등 모든 링크를 세련된 방식으로 공유하세요.
+        </div>
+
+        {/* 푸터 로고 */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 50,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 24,
+              color: "white",
+            }}
+          >
+            🔗
           </div>
           <div
             style={{
-              fontSize: 32,
-              fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.8)",
-              marginTop: 10,
+              fontSize: 28,
+              fontWeight: 900,
+              background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+              backgroundClip: "text",
+              color: "transparent",
             }}
           >
-            나만의 모든 링크를 단 하나의 페이지에
+            MyLink
           </div>
         </div>
       </div>

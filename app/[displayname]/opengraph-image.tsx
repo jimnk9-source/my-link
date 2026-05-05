@@ -98,24 +98,27 @@ export default async function Image({ params }: { params: Promise<{ displayname:
         >
           <div
             style={{
-              fontSize: 72,
+              fontSize: 80,
               fontWeight: 900,
               color: "white",
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.04em",
               textAlign: "center",
+              textShadow: "1px 0 0 white, -1px 0 0 white, 0 1px 0 white, 0 -1px 0 white, 0 4px 12px rgba(0,0,0,0.2)",
             }}
           >
             {username}
           </div>
           <div
             style={{
-              fontSize: 32,
-              fontWeight: 700,
-              color: "rgba(255, 255, 255, 0.7)",
-              background: "rgba(0,0,0,0.1)",
-              padding: "8px 24px",
+              fontSize: 34,
+              fontWeight: 900,
+              color: "rgba(255, 255, 255, 0.95)",
+              background: "rgba(0,0,0,0.2)",
+              padding: "10px 30px",
               borderRadius: "100px",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              letterSpacing: "-0.01em",
+              textShadow: "0.5px 0 0 rgba(255,255,255,0.5), -0.5px 0 0 rgba(255,255,255,0.5)",
             }}
           >
             mylink.at/@{displayname}
