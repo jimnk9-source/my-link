@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   collection,
   getDocs,
   query,
   orderBy,
+  writeBatch,
+  doc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { LinkType } from "@/data/links";
@@ -71,10 +73,77 @@ const chartConfig = {
 /* ─────────────────────────────────────────────
    통계 페이지
 ───────────────────────────────────────────── */
+/* 정답 비밀번호 */
+const RESET_PASSWORD = "mandoo0219!";
+
 export default function StatsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [sortType, setSortType] = useState<SortType>("clicks");
+
+  // 초기화 다이얼로그 상태
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  /** 다이얼로그 열기 */
+  const openDialog = () => {
+    setPwInput("");
+    setPwError("");
+    setResetDone(false);
+    setDialogOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  /** 다이얼로그 닫기 */
+  const closeDialog = () => {
+    if (resetting) return;
+    setDialogOpen(false);
+  };
+
+  /** 초기화 실행 */
+  const handleReset = async () => {
+    if (pwInput !== RESET_PASSWORD) {
+      setPwError("비밀번호가 틀렸습니다.");
+      inputRef.current?.focus();
+      return;
+    }
+    if (!user?.uid) return;
+
+    setResetting(true);
+    setPwError("");
+
+    try {
+      // 모든 링크 가져오기
+      const snapshot = await getDocs(
+        collection(db, "users", user.uid, "links")
+      );
+
+      // Firestore 배치 업데이트로 clickCount 일괄 초기화
+      const batch = writeBatch(db);
+      snapshot.forEach((docSnap) => {
+        batch.update(doc(db, "users", user.uid, "links", docSnap.id), {
+          clickCount: 0,
+        });
+      });
+      await batch.commit();
+
+      // TanStack Query 캐시 무효화 → 목록 자동 갱신
+      await queryClient.invalidateQueries({ queryKey: ["links-stats"] });
+      await queryClient.invalidateQueries({ queryKey: ["links"] });
+
+      setResetDone(true);
+    } catch (err) {
+      console.error(err);
+      setPwError("초기화 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // 링크 목록 조회 (클릭 수 내림차순)
   const { data: links = [], isLoading: linksLoading } = useQuery({
@@ -149,13 +218,22 @@ export default function StatsPage() {
         <div className="w-full max-w-[560px] flex flex-col gap-8">
 
           {/* ── 페이지 제목 ── */}
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-black tracking-tight text-foreground">
-              📊 통계
-            </h1>
-            <p className="text-sm text-muted-foreground/70">
-              링크별 클릭 수를 확인하세요.
-            </p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-black tracking-tight text-foreground">
+                📊 통계
+              </h1>
+              <p className="text-sm text-muted-foreground/70">
+                링크별 클릭 수를 확인하세요.
+              </p>
+            </div>
+            <button
+              id="reset-stats-btn"
+              onClick={openDialog}
+              className="shrink-0 mt-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-300/60 dark:border-red-500/30 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all duration-200 active:scale-95"
+            >
+              🗑 통계 초기화
+            </button>
           </div>
 
           {/* ── 총 클릭 수 카드 ── */}
@@ -376,6 +454,99 @@ export default function StatsPage() {
           </div>
         </div>
       </main>
+
+      {/* ── 비밀번호 확인 다이얼로그 ── */}
+      {dialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)" }}
+          onClick={(e) => e.target === e.currentTarget && closeDialog()}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white dark:bg-zinc-900 border border-white/20 dark:border-white/10 shadow-2xl p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200"
+          >
+            {resetDone ? (
+              /* ── 완료 상태 ── */
+              <div className="flex flex-col items-center gap-4 py-2">
+                <span className="text-5xl">✅</span>
+                <p className="text-base font-black text-foreground text-center">
+                  통계가 초기화되었습니다!
+                </p>
+                <p className="text-sm text-muted-foreground text-center">
+                  모든 링크의 클릭 수가 0으로 리셋되었습니다.
+                </p>
+                <button
+                  id="reset-done-close-btn"
+                  onClick={closeDialog}
+                  className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm transition-all duration-200 active:scale-95"
+                >
+                  확인
+                </button>
+              </div>
+            ) : (
+              /* ── 비밀번호 입력 상태 ── */
+              <>
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-lg font-black text-foreground">🔒 통계 초기화</h2>
+                  <p className="text-sm text-muted-foreground/70">
+                    모든 링크의 클릭 수가 <span className="font-bold text-red-500">0</span>으로 초기화됩니다.
+                    <br />계속하려면 비밀번호를 입력하세요.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    비밀번호
+                  </label>
+                  <input
+                    id="reset-password-input"
+                    ref={inputRef}
+                    type="password"
+                    value={pwInput}
+                    onChange={(e) => {
+                      setPwInput(e.target.value);
+                      if (pwError) setPwError("");
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && !resetting && handleReset()}
+                    placeholder="비밀번호를 입력하세요"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm font-medium text-foreground placeholder:text-gray-400 dark:placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 dark:focus:border-violet-500/50 transition-all"
+                    disabled={resetting}
+                  />
+                  {pwError && (
+                    <p className="text-xs font-bold text-red-500 pl-1">{pwError}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    id="reset-cancel-btn"
+                    onClick={closeDialog}
+                    disabled={resetting}
+                    className="flex-1 py-3 rounded-2xl border border-border/60 text-sm font-bold text-muted-foreground hover:bg-accent/50 transition-all duration-200 active:scale-95 disabled:opacity-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    id="reset-confirm-btn"
+                    onClick={handleReset}
+                    disabled={resetting || !pwInput}
+                    className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {resetting ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        초기화 중…
+                      </>
+                    ) : (
+                      "초기화"
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
