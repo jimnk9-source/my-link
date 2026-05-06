@@ -11,7 +11,23 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
+import {
+  DndContext,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { LinkType } from "@/data/links";
@@ -31,19 +47,26 @@ export function LinkList({ uid }: LinkListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [linkToDelete, setLinkToDelete] = useState<LinkType | null>(null);
 
-  // 1. 링크 목록 조회 (useQuery) - 실시간 리스너 제거
+  // 1. 링크 목록 조회 (useQuery)
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["links", uid],
     queryFn: async () => {
       const q = query(
         collection(db, "users", uid, "links"),
-        orderBy("createdAt", "desc")
+        orderBy("order", "asc")
       );
       const snapshot = await getDocs(q);
-      const fetchedLinks: LinkType[] = [];
+      let fetchedLinks: LinkType[] = [];
       snapshot.forEach((docSnap) => {
         fetchedLinks.push(docSnap.data() as LinkType);
       });
+
+      // 만약 order가 없는 기존 데이터가 있다면 createdAt 기준 정렬 후 order 부여
+      if (fetchedLinks.length > 0 && fetchedLinks.some(l => l.order === undefined)) {
+        fetchedLinks.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        fetchedLinks = fetchedLinks.map((l, i) => ({ ...l, order: i }));
+      }
+
       return fetchedLinks;
     },
     enabled: !!uid,
@@ -85,8 +108,37 @@ export function LinkList({ uid }: LinkListProps) {
     },
   });
 
+  // 5. 순서 변경 (useMutation)
+  const reorderMutation = useMutation({
+    mutationFn: async (newLinks: LinkType[]) => {
+      const batch = writeBatch(db);
+      newLinks.forEach((link, index) => {
+        const linkRef = doc(db, "users", uid, "links", link.id);
+        batch.update(linkRef, { order: index });
+      });
+      await batch.commit();
+    },
+    onMutate: async (newLinks) => {
+      await queryClient.cancelQueries({ queryKey: ["links", uid] });
+      const previousLinks = queryClient.getQueryData<LinkType[]>(["links", uid]);
+      queryClient.setQueryData(["links", uid], newLinks);
+      return { previousLinks };
+    },
+    onError: (err, newLinks, context) => {
+      if (context?.previousLinks) {
+        queryClient.setQueryData(["links", uid], context.previousLinks);
+      }
+      toast.error("순서 저장에 실패했습니다.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", uid] });
+    },
+  });
+
   const handleAddLink = async (newLink: LinkType) => {
-    await addMutation.mutateAsync(newLink);
+    // 새 링크는 가장 마지막 순서로 추가
+    const nextOrder = links.length > 0 ? Math.max(...links.map(l => l.order ?? 0)) + 1 : 0;
+    await addMutation.mutateAsync({ ...newLink, order: nextOrder });
   };
 
   const handleUpdateLink = async (id: string, data: Partial<LinkType>) => {
@@ -101,6 +153,33 @@ export function LinkList({ uid }: LinkListProps) {
   const handleDeleteConfirm = async (id: string) => {
     await deleteMutation.mutateAsync(id);
     setDeleteDialogOpen(false);
+  };
+
+  // dnd sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 클릭과 드래그 구분
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = links.findIndex((l) => l.id === active.id);
+      const newIndex = links.findIndex((l) => l.id === over.id);
+
+      const newLinks = arrayMove(links, oldIndex, newIndex).map((link, index) => ({
+        ...link,
+        order: index,
+      }));
+
+      reorderMutation.mutate(newLinks);
+    }
   };
 
   if (isLoading) {
@@ -128,22 +207,35 @@ export function LinkList({ uid }: LinkListProps) {
       </Button>
 
       {/* ── 링크 목록 ── */}
-      <section className="w-full flex flex-col gap-3">
-        {links.length === 0 && (
+      <section className="w-full">
+        {links.length === 0 ? (
           <div className="w-full rounded-2xl flex flex-col items-center justify-center py-10 gap-2 bg-accent/30 border border-dashed border-border">
             <span className="text-3xl">🔗</span>
             <p className="text-sm text-muted-foreground/60">아직 등록된 링크가 없습니다.</p>
           </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={links.map((l) => l.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="flex flex-col gap-3">
+                {links.map((link) => (
+                  <LinkItem
+                    key={link.id}
+                    link={link}
+                    onUpdate={handleUpdateLink}
+                    onDeleteRequest={handleDeleteRequest}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
-
-        {links.map((link) => (
-          <LinkItem
-            key={link.id}
-            link={link}
-            onUpdate={handleUpdateLink}
-            onDeleteRequest={handleDeleteRequest}
-          />
-        ))}
       </section>
 
       {/* ── 추가 다이얼로그 ── */}

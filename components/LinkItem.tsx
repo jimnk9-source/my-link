@@ -14,8 +14,11 @@ import {
   Delete02Icon, 
   Tick01Icon, 
   Cancel01Icon,
-  ArrowRight01Icon
+  ArrowRight01Icon,
+  DragDropVerticalIcon,
 } from "@hugeicons/core-free-icons";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface LinkItemProps {
   link: LinkType;
@@ -26,6 +29,25 @@ interface LinkItemProps {
 
 export function LinkItem({ link, onUpdate, onDeleteRequest, onClickLink }: LinkItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+
+  // dnd-kit sortable
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition: transition || undefined,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 100 : 1,
+    scale: isDragging ? "1.02" : "1",
+    boxShadow: isDragging ? "0 20px 40px -10px rgba(124,58,237,0.3)" : undefined,
+  };
 
   const {
     register,
@@ -124,49 +146,54 @@ export function LinkItem({ link, onUpdate, onDeleteRequest, onClickLink }: LinkI
   }
 
   return (
-    <div className="group relative">
-      <a
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => onClickLink?.(link.id)}
-        className="block"
-      >
-        <Card className="border-border/50 bg-card/40 backdrop-blur-md cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:bg-card/60 hover:border-violet-500/30">
-          <CardContent className="flex items-center gap-4 py-4 pr-12 md:pr-4">
-            <div className="w-10 h-10 rounded-xl bg-accent/50 flex items-center justify-center shrink-0 border border-border/10">
-              {hostname ? (
-                <img
-                  src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
-                  alt={link.title}
-                  width={20}
-                  height={20}
-                  className="rounded"
-                />
-              ) : (
-                <span className="text-muted-foreground/40 text-xs">🔗</span>
-              )}
-            </div>
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className="group relative"
+    >
+      <div className={`border-border/50 bg-card/40 backdrop-blur-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:bg-card/60 hover:border-violet-500/30 ${isDragging ? "shadow-2xl border-violet-500/50" : ""}`}>
+        <CardContent className="flex items-center gap-4 py-4 pr-12 md:pr-4">
+          {/* 드래그 핸들 */}
+          <div 
+            {...attributes}
+            {...listeners}
+            className="p-2 -ml-2 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-violet-500/50 transition-colors"
+          >
+            <HugeiconsIcon icon={DragDropVerticalIcon} size={20} />
+          </div>
 
-            <span className="flex-1 flex items-center font-bold text-foreground/90 text-sm tracking-tight truncate">
-              <span className="truncate">{link.title}</span>
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 ml-3 font-normal shrink-0">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                {link.clickCount || 0}
-              </span>
+          <div className="w-10 h-10 rounded-xl bg-accent/50 flex items-center justify-center shrink-0 border border-border/10">
+            {hostname ? (
+              <img
+                src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                alt={link.title}
+                width={20}
+                height={20}
+                className="rounded"
+              />
+            ) : (
+              <span className="text-muted-foreground/40 text-xs">🔗</span>
+            )}
+          </div>
+
+          <span className="flex-1 flex items-center font-bold text-foreground/90 text-sm tracking-tight truncate">
+            <span className="truncate">{link.title}</span>
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 ml-3 font-normal shrink-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              {link.clickCount || 0}
             </span>
+          </span>
 
-            <HugeiconsIcon 
-              icon={ArrowRight01Icon} 
-              size={18} 
-              className="text-muted-foreground/30 group-hover:text-violet-500 transition-all group-hover:translate-x-1 hidden md:block" 
-            />
-          </CardContent>
-        </Card>
-      </a>
+          <HugeiconsIcon 
+            icon={ArrowRight01Icon} 
+            size={18} 
+            className="text-muted-foreground/10 group-hover:text-violet-500/30 transition-all hidden md:block" 
+          />
+        </CardContent>
+      </div>
 
       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
         <Button

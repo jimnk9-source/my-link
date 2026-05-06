@@ -127,3 +127,40 @@
     @apply font-sans;
     }
 }
+
+/* ─────────────────────────────────────────────
+   애니메이션: 프로필 아이콘 버스트 (1초 시퀀스)
+───────────────────────────────────────────── */
+
+@keyframes avatar-full-burst {
+  /* 0~0.25s: 터짐 (확대 + 사라짐) */
+  0% { transform: scale(1); opacity: 1; filter: blur(0); }
+  25% { transform: scale(2); opacity: 0; filter: blur(12px); }
+  
+  /* 0.25s~0.3s: 순간 이동 (작은 상태로 대기) */
+  25.1% { transform: scale(0); opacity: 0; filter: blur(0); }
+  30% { transform: scale(0); opacity: 1; }
+  
+  /* 0.3s~1.0s: 쫀득하게 복원 (Elastic) */
+  75% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes particle-out {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  20% { opacity: 1; }
+  100% { transform: var(--translate-final) scale(0); opacity: 0; }
+}
+
+.animate-avatar-burst {
+  animation: avatar-full-burst 1s forwards cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-particle {
+  animation: particle-out 0.8s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 드래그 앤 드롭 부드러운 전환 */
+.dnd-item-transition {
+  transition: transform 250ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms ease;
+}

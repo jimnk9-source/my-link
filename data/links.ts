@@ -5,4 +5,5 @@ export interface LinkType {
   createdAt: number;
   updatedAt?: number;
   clickCount?: number;
+  order?: number;
 }

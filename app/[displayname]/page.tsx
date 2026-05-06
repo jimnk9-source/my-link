@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  doc, 
-  getDoc, 
-  collection, 
-  getDocs, 
-  query, 
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
   orderBy,
   updateDoc,
   increment
@@ -19,8 +20,67 @@ import { useTheme } from "next-themes";
 import { Header } from "@/components/Header";
 
 /* ─────────────────────────────────────────────
+   버스트 애니메이션 프로필 아바타
+───────────────────────────────────────────── */
+function BurstAvatar({ initial }: { initial: string }) {
+  const [isBursting, setIsBursting] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; tx: string; ty: string }[]>([]);
+
+  const handleBurst = () => {
+    if (isBursting) return;
+    setIsBursting(true);
+
+    // 파티클 10개 생성 (더 화려하게)
+    const newParticles = Array.from({ length: 10 }).map((_, i) => {
+      const angle = (i * 36) * (Math.PI / 180);
+      const dist = 100 + Math.random() * 60;
+      return {
+        id: Date.now() + i,
+        tx: `${Math.cos(angle) * dist}px`,
+        ty: `${Math.sin(angle) * dist}px`,
+      };
+    });
+    setParticles(newParticles);
+
+    // 1초 후 상태 리셋
+    setTimeout(() => {
+      setIsBursting(false);
+      setParticles([]);
+    }, 1000);
+  };
+
+  return (
+    <div className="relative cursor-pointer" onClick={handleBurst}>
+      {/* 1. 통합 애니메이션 원 */}
+      <div
+        className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl relative z-20 ${isBursting ? "animate-avatar-burst" : ""}`}
+        style={{
+          background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+          boxShadow: "0 10px 40px -10px rgba(124,58,237,0.5)",
+        }}
+      >
+        {initial}
+      </div>
+
+      {/* 2. 파티클 */}
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full z-10 animate-particle"
+          style={{
+            background: "linear-gradient(135deg, #7c3aed, #2563eb)",
+            "--translate-final": `${p.tx}, ${p.ty}`,
+            marginLeft: "-8px",
+            marginTop: "-8px",
+          } as any}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    배경 컴포넌트
-   (app/page.tsx의 디자인을 계승)
 ───────────────────────────────────────────── */
 function Background() {
   return (
@@ -87,7 +147,7 @@ export default function PublicProfilePage() {
       if (!uid) return [];
       const q = query(
         collection(db, "users", uid, "links"),
-        orderBy("createdAt", "desc")
+        orderBy("order", "asc")
       );
       const snapshot = await getDocs(q);
       const fetchedLinks: LinkType[] = [];
@@ -134,21 +194,11 @@ export default function PublicProfilePage() {
 
       <main className="flex min-h-screen flex-col items-center px-4 pt-24 pb-12 overflow-x-hidden">
         <div className="w-full max-w-[500px] flex flex-col gap-10">
-          
+
           {/* ── 프로필 섹션 ── */}
           <section className="flex flex-col items-center gap-4 text-center">
-            <div className="relative group">
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl transition-transform duration-500 group-hover:scale-105"
-                style={{
-                  background: "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-                  boxShadow: "0 10px 40px -10px rgba(124,58,237,0.5)",
-                }}
-              >
-                {initial}
-              </div>
-              <div className="absolute inset-0 rounded-full bg-violet-500/20 blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+            <BurstAvatar initial={initial} />
+
 
             <div className="flex flex-col gap-1.5 items-center w-full max-w-[320px]">
               <h1 className="text-2xl font-black text-foreground tracking-tight">
